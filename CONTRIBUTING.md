@@ -1,50 +1,284 @@
-# Contributing / 参与贡献
+# Contributing to DayReplay
 
-Thanks for your interest in making DayReplay better! / 感谢你愿意让 DayReplay 变得更好！
+**Thank you for wanting to contribute!** Whether you found a bug, want to add a feature,
+or just want to help translate — every contribution matters.
 
-## Ways to help / 能帮上忙的事
+---
 
-| Help wanted / 需要的帮助 | Detail / 说明 |
-|---|---|
-| 🌍 **Translate docs** | `docs/` manuals are Chinese. Translating any part into English is a huge win. / 手册目前是中文，翻译任何一部分都是大帮助 |
-| 🖥️ **Test on your machine** | Run the installer on your Windows PC and report what breaks. / 在你的 Windows 机器上实测安装器，报告问题 |
-| 🧩 **good first issue** | Small, well-scoped tasks labeled in the issue tracker. / 见 issue 列表中带此标签的小任务 |
-| 🔊 **Sound event tuning** | Add or recalibrate activity-sound labels (AudioSet mapping). / 补充或校准活动声标签 |
-| 🎨 **UI** | The daily timeline page (`vdigest.py`) is self-contained HTML/SVG/JS. / 时间轴页面是自包含的 HTML/SVG/JS，改起来很直接 |
+## Table of Contents
 
-## Dev setup / 开发环境
+- [I'm a user — I found a bug!](#im-a-user--i-found-a-bug)
+- [I'm a developer — I want to fix/add something](#im-a-developer--i-want-to-fixadd-something)
+- [Development setup](#development-setup)
+- [Code style & rules](#code-style--rules)
+- [Ways to help (quick list)](#ways-to-help-quick-list)
+
+---
+
+## I'm a user — I found a bug!
+
+### How to report a bug
+
+1. **Go to:** https://github.com/sedlee0811-44/DayReplay/issues
+2. Click **"New Issue"**
+3. Fill in this template:
 
 ```text
-Windows 10/11 64-bit, Python 3.11
-git clone https://github.com/sedlee0811-44/DayReplay.git
-python -m venv .venv && .venv\Scripts\pip install -r requirements.txt
-python voice_daemon.py        # recorder + speech-to-text + screen watcher
-python vdigest.py             # build today's timeline page
+## Bug description
+[What went wrong? One or two sentences.]
+
+## Steps to reproduce
+1. I did this...
+2. Then this happened...
+3. And then...
+
+## Expected behavior
+[What should have happened?]
+
+## Actual behavior
+[What actually happened?]
+
+## System info
+- Windows version:  [e.g., Windows 11 23H2]
+- DayReplay version: [e.g., v1.1.1 — see VERSION file or Releases page]
+- Install type:     [lite ZIP / from source]
+
+## Log excerpt (if any)
+[Paste the last 20 lines from logs/daemon.log]
+[⚠️ NEVER paste real transcript text or audio file names — those are private!]
 ```
 
-Run the test suites before submitting a PR / 提 PR 前请先跑测试：
+4. Click **"Submit new issue"** — done!
+
+> **Don't have a GitHub account?** It's free and takes 30 seconds:
+> Go to https://github.com/signup — you only need an email address.
+
+### What happens next?
+
+- Someone will look at your report within a few days
+- We might ask follow-up questions
+- When it's fixed, you'll get a notification — just download the new version
+
+---
+
+## I'm a developer — I want to fix/add something!
+
+Here's the complete workflow. It looks long but each step is simple:
+
+```
+┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
+│   Fork   │ → │  Clone   │ → │   Fix    │ → │  Push    │ → │   PR     │
+│          │    │          │    │          │    │          │    │          │
+│ (1 click)│    │(1 command│    │ (edit in │    │(1 command│    │(fill form│
+│          │    │  + enter)│    │  VS Code)│    │  + enter)│    │  + submit)│
+└──────────┘    └──────────┘    └──────────┘    └──────────┘    └──────────┘
+   ~10 sec         ~30 sec        varies           ~10 sec         ~2 min
+```
+
+### Step 1: Fork (make your own copy)
+
+1. Open: https://github.com/sedlee0811-44/DayReplay
+2. Click the **"Fork"** button (top-right corner)
+3. This creates YOUR copy of the repo at `https://github.com/YOUR-USERNAME/DayReplay`
+
+### Step 2: Clone (download to your computer)
+
+Open a terminal (PowerShell, Git Bash, or CMD) and run:
+
+```bash
+git clone https://github.com/YOUR-USERNAME/DayReplay.git
+cd DayReplay
+```
+
+This downloads the code to your computer.
+
+### Step 3: Create a branch
+
+Always make changes on a new branch (never on `main`):
+
+```bash
+git checkout -b fix/your-bug-name        # for bug fixes
+# OR
+git checkout -b feature/your-feature-name # for new features
+```
+
+Examples:
+- `git checkout -b fix/crash-on-startup`
+- `git checkout -b feature/dark-mode-ui`
+- `git checkout -b docs/translate-readme`
+
+### Step 4: Make your changes
+
+Edit files in your favorite editor (VS Code recommended):
+
+```bash
+code .    # opens VS Code in this folder
+```
+
+Test your changes before proceeding (see [Development setup](#development-setup)).
+
+### Step 5: Commit & Push
+
+When your changes are ready:
+
+```bash
+# See what files changed
+git status
+
+# Add the files you changed
+git add path/to/changed/file.py
+
+# Write a commit message (describe WHAT and WHY)
+git commit -m "Fix: describe what you fixed"
+
+# Send to your GitHub fork
+git push origin fix/your-bug-name
+```
+
+### Step 6: Pull Request (PR)
+
+1. Open your fork in browser: `https://github.com/YOUR-USERNAME/DayReplay`
+2. You'll see a banner saying **"This branch is ahead... Compare & pull request"**
+3. Click that button
+4. Fill in the PR form:
 
 ```text
+## Title
+Fix/Feature: short description (e.g., "Fix: crash when microphone is disconnected")
+
+## What does this PR do?
+[Briefly explain what you changed and why]
+
+## How to test?
+[Steps for someone else to verify your fix works]
+
+## Screenshots (if UI changes)
+[paste or attach screenshots]
+```
+
+5. Click **"Create pull request"** — done!
+
+### What happens after you submit a PR?
+
+- Automated checks run (tests, linting)
+- A maintainer reviews your code (might ask for changes)
+- Once approved, your code gets merged into the main project
+- 🎉 Your name appears in the contribution graph!
+
+---
+
+## Development setup
+
+### Prerequisites
+
+| What | Version | Why |
+|---|---|---|
+| Windows | 10 or 11, 64-bit | Target platform |
+| Python | 3.11 | Runtime |
+| Git | latest | Version control |
+
+### One-time setup
+
+```bash
+# 1. Clone the repo
+git clone https://github.com/sedlee0811-44/DayReplay.git
+cd DayReplay
+
+# 2. Create virtual environment
+python -m venv .venv
+
+# 3. Activate it
+.venv\Scripts\activate      # PowerShell/CMD
+
+# 4. Install dependencies
+pip install -r requirements.txt
+```
+
+### Running the app
+
+```bash
+# Terminal 1: Start the recorder daemon
+python voice_daemon.py
+
+# Terminal 2: Build today's timeline page
+python vdigest.py
+
+# Terminal 3: Search / explore data
+python vsearch_ui.py
+```
+
+### Running tests
+
+**Before submitting a PR, always run these:**
+
+```bash
+# Fast tests (no models needed, ~30 seconds)
 python test_segment.py
 python test_search.py
 python test_update.py
-python test_events.py     # needs the ASR model, slower / 需要加载模型，较慢
+python test_e2e_events.py
+
+# Slow test (needs ASR model loaded, ~2 minutes)
+python test_events.py
 ```
 
-## Ground rules / 基本约定
+All tests must pass before we can merge your PR.
 
-- **No cloud. No telemetry. Ever.** Any PR that adds a network call will be
-  rejected unless it is strictly optional and off by default.
-  / 不上云、不埋点。任何新增网络请求的 PR，若非默认关闭的可选项，一律拒绝。
-- Keep the default behavior byte-compatible: new code paths must not change
-  what existing users get. / 新分支不许改变现有用户的默认行为。
-- Docs in `docs/` are Chinese-first; English translations live alongside
-  (`.en.md` suffix or the same file, bilingual). / 文档中文优先，可中英同页。
+---
 
-## Reporting bugs / 报告问题
+## Code style & rules
 
-Open an issue with: Windows version, what you did, what you expected, what
-happened, and the relevant lines from `logs/daemon.log`
-(**redact any personal content** — never paste transcript text or audio paths
-of real recordings). / 报 bug 请附系统版本、复现步骤、`logs/daemon.log` 相关行，
-**务必隐去真实转写内容等隐私**。
+These are non-negotiable. PRs that break these will not be merged:
+
+### 🔒 Privacy first
+
+- **No cloud calls. No telemetry. Ever.**
+- Any new network request MUST be:
+  - Off by default AND
+  - Clearly documented AND
+  - Easy to disable
+- If your PR adds a hidden network call, it will be rejected
+
+### 🔄 Backward compatible
+
+- New features must be opt-in (don't change existing users' experience)
+- New config options must have sensible defaults
+- Database schema changes need migration logic
+
+### 📝 Documentation
+
+- Public functions need docstrings
+- New config options need comments explaining them
+- UI text goes through `vlang.py` (i18n) — no hardcoded strings
+
+### 🧪 Tests
+
+- Bug fixes need a regression test
+- New features need unit tests
+- If you can't write a test, explain why in the PR
+
+---
+
+## Ways to help (quick list)
+
+| Type | What | Difficulty | Good for beginners? |
+|---|---|---|---|
+| 🐛 **Bug report** | Found something broken? Tell us! | trivial | ✅ anyone |
+| 🌍 **Translation** | Docs are Chinese → English | easy | ✅ great first PR |
+| 🖥️ **Testing** | Run installer, report issues | easy | ✅ any Windows PC |
+| 🎨 **UI work** | Timeline HTML/CSS/JS (`vdigest.py`) | medium | ✅ HTML/CSS skills enough |
+| 🔊 **Sound tuning** | Add sound event labels | medium | needs domain knowledge |
+| 🧩 **Core dev** | New features, refactoring | hard | needs Python + audio |
+
+---
+
+## Questions?
+
+- **Bug reports:** https://github.com/sedlee0811-44/DayReplay/issues
+- **Discussions / questions:** https://github.com/sedlee0811-44/DayReplay/discussions
+- **Email (private only):** `sedlee0811` at gmail dot com
+- **Security issues:** please DO NOT open a public issue — email directly
+
+---
+
+*Thank you for making DayReplay better!* 🙌

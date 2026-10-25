@@ -8,15 +8,85 @@
 
 ![DayReplay daily timeline](docs/screenshots/timeline.png)
 
-It brings your **microphone**, your **screen**, and your **apps** together into one
-aligned timeline — a true, complete record of your day. Missed something? Play it
-back anytime, **as clear as the moment it happened**.
+---
 
-Ask *"what did I do last Tuesday?"* — get the answer in seconds, with links back to
-the original audio and screen shots.
+## 📥 Download & Install (3 minutes)
 
-<!-- Social preview image for sharing -->
-<meta name="og:image" content="docs/screenshots/social_preview.png">
+### Step 1: Download
+
+**Click this button to go to the download page:**
+
+<p align="center">
+<a href="../../releases"><img src="https://img.shields.io/badge/⬇️_Download-v1.1.1_-blue?style=for-the-badge&logo=github" alt="Download DayReplay"></a>
+</p>
+
+**Or go directly:** https://github.com/sedlee0811-44/DayReplay/releases
+
+Download: **`DayReplay-1.1.1-lite-win64.zip`** (~330 MB)
+
+### Step 2: Extract & Install
+
+```
+1. Right-click the ZIP → "Extract All..." → pick a folder
+   (e.g., C:\Users\YourName\DayReplay\)
+
+2. Open that folder, double-click:  install.bat
+
+3. A window pops up and does everything automatically:
+   ✓ Creates desktop shortcuts
+   ✓ Offers to download AI models (~1.3 GB, one-time only)
+   ✓ Runs a quick self-test
+```
+
+### Step 3: Start Using
+
+Look at your Desktop — two new shortcuts appear:
+
+| Shortcut | What it does |
+|---|---|
+| **DayReplay** | Double-click to START recording |
+| **Stop DayReplay** | Double-click to STOP recording |
+
+That's it! Within minutes, open your first daily timeline.
+
+> **Never used GitHub before?** Here's what you need to know:
+> - GitHub is where we host the download file — you don't need an account to download
+> - The "Releases" page is just a file download page (like any other download site)
+> - You get a normal ZIP file — extract it like any other ZIP
+> - No registration, no account, no tracking — just download and run
+
+<details>
+<summary><b>📸 What happens after I double-click install.bat?</b></summary>
+
+The installer window shows:
+
+```
+  ============================================
+    DayReplay  -  A diary that writes itself
+  ============================================
+
+  [1/4] Creating desktop shortcuts...
+         OK: Desktop shortcut created
+
+  [2/4] Checking AI models...
+         AI MODELS NOT FOUND (~1.3 GB)
+         Download models now? (Y/n)  ← type Y and press Enter
+
+  Starting model download... (this may take a while)
+  ████████████████████████████████ 100%
+
+  [3/4] Running quick self-test...
+         OK: Self-test passed!
+
+  [4/4] Installation complete!
+  ============================================
+
+  HOW TO USE:
+    Desktop "DayReplay"      → START recording
+    Desktop "Stop DayReplay" → STOP recording
+```
+
+</details>
 
 ---
 
@@ -72,26 +142,17 @@ to the original audio and screenshots.
 - **One-click stop** — the mic is yours: tray icon, kill switch, everything in
   plain sight
 
-## Quick start
+## Quick start (summary)
 
-1. Download `DayReplay-<version>-lite-win64.zip` from
-   [Releases](../../releases) — **~330 MB**, unzip it anywhere.
-2. On the target PC, double-click **`install.bat`** (one-click install, no
-   admin rights, no Python needed).
-3. The installer will offer to **download the AI models** from HuggingFace
-   (free, open-source, ~1.3 GB) — or skip and run `download_models.py` later.
-   This is the only time you need internet.
-4. Pick your microphone, set up autostart, run a self-test, then open your
-   first daily timeline.
+| Step | What to do | Time |
+|---|---|---|
+| **1. Download** | Get `DayReplay-*-lite-win64.zip` from [Releases](../../releases) | ~1 min |
+| **2. Extract** | Right-click ZIP → "Extract All" → pick a folder | 10 sec |
+| **3. Install** | Open folder → double-click **`install.bat`** | 2 min (first run downloads ~1.3 GB models) |
+| **4. Use** | Double-click **DayReplay** on Desktop to start | instant |
 
-First timeline appears within minutes. After the model download, DayReplay
-works fully offline forever.
-
-> **Prefer zero internet?** A "full" package (~3.4 GB) with the models
-> included is available on request — copy it on a USB stick and never
-> connect.
-
-First timeline appears within minutes.
+**Requirements:** Windows 10/11 64-bit. No admin rights. No Python. No GPU.
+Internet only needed once (for AI model download).
 
 <details>
 <summary><b>Run from source</b> (developers)</summary>
@@ -155,14 +216,28 @@ first contribution).
 
 ## Contributing
 
-Issues and pull requests are welcome — especially from English speakers. Right now
-the fastest ways to help:
+Want to help? Great! Here's how:
 
-1. **Translate docs** (`docs/` is Chinese; READMEs are bilingual)
-2. **Test the installer on your machine** and report what breaks
-3. Grab a `good first issue`
+**Found a bug?** → [Open an Issue](../../issues) (tell us your Windows version + what happened)
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+**Want to add a feature?** → See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide
+
+**Quick ways to contribute:**
+1. 🌍 **Translate docs** — `docs/` is in Chinese; any English translation helps
+2. 🖥️ **Test on your PC** — run the installer and tell us what breaks
+3. 🐛 **Report bugs** — [Issues page](../../issues) — screenshot + error log = <3
+
+## Contact / 联系方式
+
+| Method | When to use | Link |
+|---|---|---|
+| **GitHub Issues** | Bug reports, feature requests, public discussion | [Open an Issue](../../issues) |
+| **GitHub Discussions** | Questions, ideas, casual chat | [Discussions page](../../discussions) |
+| **Email** | Private / business inquiries only | `sedlee0811` **at** `gmail` **dot** `com` |
+
+> **Prefer Issues or Discussions** when possible — it helps others with the same question,
+> and keeps the conversation public and searchable.
+> Email is reserved for private matters (collaboration, licensing, security issues).
 
 ## License
 

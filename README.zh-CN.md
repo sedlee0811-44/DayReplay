@@ -127,6 +127,17 @@ python vdigest.py             # 生成当日时间轴页面
 
 详见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
+## 联系方式
+
+| 方式 | 适用场景 | 链接 |
+|---|---|---|
+| **GitHub Issues** | 报 Bug、提功能需求、公开讨论 | [提交 Issue](../../issues) |
+| **GitHub Discussions** | 提问、闲聊、想法交流 | [讨论区](../../discussions) |
+| **邮箱** | 私事 / 商务合作 | `sedlee0811` **at** `gmail` **dot** `com` |
+
+> 优先用 Issues 或 Discussions —— 这样有同样问题的人也能看到答案，
+> 对社区更有帮助。邮箱留给私事（合作、授权、安全问题）。
+
 ## 许可证
 
 本项目代码采用 MIT。内置模型（SenseVoice、CAM++、AST）各自遵循其上游许可，
