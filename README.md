@@ -7,7 +7,7 @@
 [中文说明](README.zh-CN.md) · [Roadmap](#roadmap) · [Contributing](#contributing)
 
 <!-- TODO: replace with a real (privacy-safe) screenshot of the S-shaped daily timeline -->
-![DayReplay daily timeline](docs/screenshots/timeline.png)
+![DayReplay daily timeline](docs/screenshots/timeline.svg)
 
 It brings your **microphone**, your **screen**, and your **apps** together into one
 aligned timeline — a true, complete record of your day. Missed something? Play it

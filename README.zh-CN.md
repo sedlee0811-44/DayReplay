@@ -8,7 +8,7 @@
 [English](README.md) · [Roadmap](#路线图) · [参与贡献](#参与贡献)
 
 <!-- TODO: 替换为真实脱敏截图（总账 S 形时间轴） -->
-![DayReplay 一天时间轴](docs/screenshots/timeline.png)
+![DayReplay 一天时间轴](docs/screenshots/timeline.svg)
 
 DayReplay 把**麦克风拾音、屏幕画面、用过的应用**融合对齐到同一条时间轴上——
 真实、完整地记录你这一天做了什么。哪天想不起来？随时回放，

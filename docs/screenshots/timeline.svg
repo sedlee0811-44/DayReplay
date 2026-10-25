@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640" font-family="Segoe UI, Microsoft YaHei, sans-serif">
+  <rect width="1200" height="640" fill="#101216"/>
+  <text x="600" y="52" fill="#5c6472" font-size="20" letter-spacing="10" text-anchor="middle">D A Y R E P L A Y — DAILY TIMELINE</text>
+  <text x="600" y="86" fill="#3a414d" font-size="14" text-anchor="middle">sample data · 样例数据</text>
+
+  <!-- S-shaped rail -->
+  <path d="M 150 170 C 450 120, 750 120, 1050 170 C 1050 170, 600 260, 150 330 C 150 330, 750 430, 1050 480"
+        fill="none" stroke="#2e3542" stroke-width="6" stroke-linecap="round"/>
+  <path d="M 150 170 C 450 120, 750 120, 1050 170" fill="none" stroke="#6ecf9b" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- day nodes -->
+  <g font-size="15">
+    <circle cx="150" cy="170" r="9" fill="#6ecf9b"/><text x="150" y="140" fill="#e6e8eb" text-anchor="middle" font-weight="600">Oct 25</text>
+    <circle cx="600" cy="139" r="8" fill="#2e3542"/><text x="600" y="112" fill="#8a93a3" text-anchor="middle">Oct 24</text>
+    <circle cx="1050" cy="170" r="8" fill="#2e3542"/><text x="1050" y="140" fill="#8a93a3" text-anchor="middle">Oct 23</text>
+    <circle cx="150" cy="330" r="8" fill="#2e3542"/><text x="150" y="302" fill="#8a93a3" text-anchor="middle">Oct 22</text>
+    <circle cx="1050" cy="480" r="8" fill="#2e3542"/><text x="1050" y="452" fill="#8a93a3" text-anchor="middle">Oct 21</text>
+  </g>
+
+  <!-- event cards on Oct 25 -->
+  <g>
+    <rect x="230" y="196" width="330" height="58" rx="10" fill="#181d25" stroke="#2e3542"/>
+    <text x="248" y="220" fill="#6ecf9b" font-size="13" font-weight="700">09:14 · SPEECH 🎙</text>
+    <text x="248" y="242" fill="#c9d1dc" font-size="14">"Let's move the meeting to three." / 说话人: Me</text>
+
+    <rect x="620" y="80" width="280" height="46" rx="10" fill="#181d25" stroke="#2e3542"/>
+    <text x="638" y="100" fill="#e0b356" font-size="13" font-weight="700">10:02 · SOUND 🔔</text>
+    <text x="638" y="118" fill="#c9d1dc" font-size="13">door · 开关门 ×2</text>
+
+    <rect x="700" y="210" width="300" height="46" rx="10" fill="#181d25" stroke="#2e3542"/>
+    <text x="718" y="230" fill="#7ab3e8" font-size="13" font-weight="700">11:40 · SCREEN 🖥</text>
+    <text x="718" y="248" fill="#c9d1dc" font-size="13">VS Code · DayReplay</text>
+
+    <rect x="250" y="356" width="330" height="58" rx="10" fill="#181d25" stroke="#2e3542"/>
+    <text x="268" y="380" fill="#e08b8b" font-size="13" font-weight="700">15:27 · SOUND 👶</text>
+    <text x="268" y="402" fill="#c9d1dc" font-size="14">baby crying · 小孩啼哭 → transcript: "别哭，爸爸在"</text>
+  </g>
+
+  <!-- search bar -->
+  <g>
+    <rect x="330" y="556" width="540" height="46" rx="23" fill="#181d25" stroke="#3a414d"/>
+    <circle cx="362" cy="579" r="9" fill="none" stroke="#5c6472" stroke-width="2.5"/>
+    <line x1="369" y1="586" x2="376" y2="593" stroke="#5c6472" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="392" y="585" fill="#8a93a3" font-size="16">what did I do last Tuesday?  上周二我干了什么？</text>
+  </g>
+</svg>
