@@ -1,0 +1,29 @@
+# ===== 私人数据 / personal data —— 绝不入库 =====
+data/
+reports/
+models/
+updates/
+backup/
+logs/
+tools/
+.venv/
+__pycache__/
+*.pyc
+*.db
+*.db-wal
+*.db-shm
+*.wav
+*.mp3
+*.flac
+
+# 内部产物 / local artifacts
+*.bak*
+*.orig
+.workbuddy/
+docs/github/
+docs/日报样板.html
+node_modules/
+
+# 系统 / OS
+Thumbs.db
+desktop.ini
