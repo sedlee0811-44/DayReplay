@@ -38,6 +38,7 @@ from pathlib import Path
 import vcfg
 import vcollect as vc
 import vcrop
+import vlang
 import vsession as vss
 
 OLLAMA = "http://127.0.0.1:11434"
@@ -1686,8 +1687,8 @@ def _md_inline(s: str) -> str:
 
 
 _PAGE = """<!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8">
-<title>总账</title>
+<html lang="{page_lang}"><head><meta charset="utf-8">
+<title>{page_title}</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 {refresh_meta}
@@ -1895,10 +1896,10 @@ li.day-node.open li.ev {{ animation: ev-in .34s cubic-bezier(.22,1,.36,1) backwa
                       stroke-dashoffset: 0 !important; }}
 }}
 </style></head><body><main>
-<h1>总　账</h1>
+<h1>{page_h1}</h1>
 {ver_banner}
 {hint}
-<p class="tip">一根 S 形的轴，走到屏幕边上就折回下一行，新行的第一个点落在上一行最后一个点的正下方 —— 屏幕越宽，一行放得下的天就越多。轴上一天一个点，先看这天干了什么；点一下才长出当天的明细，再点收起。明细里的录音、截图、文档都能直接点开。</p>
+<p class="tip">{page_intro}</p>
 {body}
 <script>
 (function () {{
@@ -2068,16 +2069,49 @@ li.day-node.open li.ev {{ animation: ev-in .34s cubic-bezier(.22,1,.36,1) backwa
 """
 
 # 总账 md 的几种行，解析时靠它们区分
+# 日期行两种写法都收：中文的"2026年10月25日 周日"和英文的"2026-10-25 Sunday"。
+# 英文那条是给英文版总账（DAYREPLAY_LANG=en）用的 —— 渲染管线是同一套，
+# 换语言不换结构，结构唯一才不会漂。
 _DAY_RE = re.compile(r"^##\s*(\d{4})年(\d{2})月(\d{2})日\s*周([一二三四五六日])\s*(.*)$")
+_DAY_RE_EN = re.compile(
+    r"^##\s*(\d{4})-(\d{2})-(\d{2})\s+([A-Za-z]+)\s*(.*)$")
 _DUR_RE = re.compile(r"(\d+)\s*小时\s*(\d+)\s*分")
+_DUR_RE_EN = re.compile(r"(\d+)\s*h\s*(\d+)\s*m")
 _RANGE_RE = re.compile(r"^(\d{1,2}):(\d{2})\s*[–—\-~]\s*(\d{1,2}):(\d{2})$")
 _CHIP_RE = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
-_ROW_CLS = {"屏幕": "", "电脑日志": "v2", "语音": "v3"}
-_LINK_PREFIX = ("整场细节：", "想看细节：")
+# 行标签 → CSS 类。两套 key 各留一份：解析到的是 md 里写的原字，
+# 渲染时统一换成"当前语言下的显示名"。
+_ROW_CLS = {"屏幕": "", "电脑日志": "v2", "语音": "v3",
+            "Screen": "", "File Log": "v2", "Voice": "v3"}
+_ROW_KEY_ZH = {"屏幕": "screen", "电脑日志": "file_log", "语音": "voice",
+               "细节": "details"}
+_ROW_KEY_EN = {"Screen": "screen", "File Log": "file_log", "Voice": "voice",
+               "Details": "details"}
+_LINK_PREFIX = ("整场细节：", "想看细节：",
+                "Full session details:", "Want details:")
+
+
+def _page_kwargs() -> dict:
+    """_PAGE 里所有语言相关的占位符。
+
+    集中一处，而不是散在每个 .format() 调用点 —— 少一个就整页渲染
+    抛 KeyError，白跑一次生成。
+    """
+    return {
+        "page_lang": "en" if vlang.IS_EN else "zh-CN",
+        "page_title": vlang.t("page_title"),
+        "page_h1": vlang.t("page_h1"),
+        "page_intro": vlang.t("page_intro"),
+    }
 
 
 def _parse_ledger(md_text: str) -> list[dict]:
-    """把总账 md 拆成"一次开机"的对象列表。日期相同的后面合成一天。"""
+    """把总账 md 拆成"一次开机"的对象列表。日期相同的后面合成一天。
+
+    日期行中英两种写法都收（见 _DAY_RE / _DAY_RE_EN）：英文页的 md 用
+    "## 2026-10-25 Sunday"，中文页用 "## 2026年10月25日 周日"。渲染管线
+    是同一套，只是标签文字按当前语言走 vlang。
+    """
     out: list[dict] = []
     cur: dict | None = None
     for raw in md_text.split("\n"):
@@ -2088,8 +2122,17 @@ def _parse_ledger(md_text: str) -> list[dict]:
         if m:
             y, mo, dd, wk, rest = m.groups()
             cur = {"date": f"{y}-{mo}-{dd}",
-                   "label": f"{int(mo)} 月 {int(dd)} 日",
-                   "week": "周" + wk, "rest": rest.strip(),
+                   "label": vlang.month_label(int(mo), int(dd)),
+                   "week": vlang.week_label(wk), "rest": rest.strip(),
+                   "lede": [], "nodes": [], "links": []}
+            out.append(cur)
+            continue
+        m = _DAY_RE_EN.match(t)
+        if m:
+            y, mo, dd, wk, rest = m.groups()
+            cur = {"date": f"{y}-{mo}-{dd}",
+                   "label": vlang.month_label(int(mo), int(dd)),
+                   "week": vlang.week_label(wk), "rest": rest.strip(),
                    "lede": [], "nodes": [], "links": []}
             out.append(cur)
             continue
@@ -2159,7 +2202,7 @@ def _day_summary(sessions: list[dict]) -> str:
         for n in s.get("nodes") or []:
             if n.get("title"):
                 return _shrink(n["title"], 50)
-    return "这天没有可用记录"
+    return vlang.t("no_records")
 
 
 def _chips(val: str) -> str:
@@ -2183,18 +2226,35 @@ def _chips(val: str) -> str:
             orig = href[:-len(".crop.jpg")] + ".jpg"
             if (REPORT_DIR / orig).exists():
                 out.append(f'<a class="ev-orig" href="{orig}" '
-                           f'target="_blank">原图</a>')
+                           f'target="_blank">{vlang.t("orig")}</a>')
     return "".join(out)
+
+
+def _row_display(key: str) -> tuple[str, str]:
+    """行标签 → (显示名, CSS 类)。
+
+    md 里写的是中文标签还是英文标签都行（英文版总账用英文），这里统一
+    翻译成当前语言的显示名。翻译表对不上就退回原文 —— 宁可显示原文，
+    也不要整页渲染不出来。
+    """
+    table = _ROW_KEY_EN if vlang.IS_EN else _ROW_KEY_ZH
+    k = table.get(key)
+    if k is None:                       # 反过来查一次（语言与 md 不匹配时）
+        other = _ROW_KEY_ZH if vlang.IS_EN else _ROW_KEY_EN
+        k = other.get(key)
+    if k is None:
+        return key, _ROW_CLS.get(key, "")
+    return vlang.t(k), _ROW_CLS.get(key, "")
 
 
 def _render_row(line: str) -> str:
     mark, _, val = line.partition("　")
     key = mark.strip("*").strip()
-    if key == "细节":
-        return (f'<div class="ev-row"><span class="evk">可点开</span>'
+    disp, cls = _row_display(key)
+    if key in ("细节", "Details"):
+        return (f'<div class="ev-row"><span class="evk">{vlang.t("openable")}</span>'
                 f'{_chips(val)}</div>')
-    cls = _ROW_CLS.get(key, "")
-    return (f'<div class="row {cls}"><span class="k">{key}</span>'
+    return (f'<div class="row {cls}"><span class="k">{disp}</span>'
             f'<p class="v">{_md_inline(val)}</p></div>')
 
 
@@ -2216,10 +2276,10 @@ def _split_head(rest: str) -> tuple[str, str]:
     rest = (rest or "").strip()
     parts = [p.strip() for p in rest.split("·") if p.strip()]
     if not parts:
-        return "本次开机", ""
+        return vlang.t("session"), ""
     m = re.match(r"^(\d{1,2}:\d{2})\s*(.*)$", parts[0])
     if not m:
-        return "本次开机", rest
+        return vlang.t("session"), rest
     badge = m.group(1)
     cap = " · ".join(([m.group(2)] if m.group(2) else []) + parts[1:])
     return badge, cap
@@ -2237,7 +2297,7 @@ def _split_span(span: str) -> tuple[str, str]:
     a = f"{int(m.group(1)):02d}:{m.group(2)}"
     b = f"{int(m.group(3)):02d}:{m.group(4)}"
     mins = int(_span_minutes(span))
-    tail = f"→ {b}" + (f" · {mins} 分钟" if mins >= 1 else "")
+    tail = f"→ {b}" + (f' · {mins} {vlang.t("min")}' if mins >= 1 else "")
     return a, tail
 
 
@@ -2288,7 +2348,8 @@ def _render_session(s: dict, color: str = "", show_mark: bool = False) -> str:
     return "".join(out)
 
 
-def _render_day(date_key: str, sessions: list[dict], index: int = 0) -> str:
+def _render_day(date_key: str, sessions: list[dict], index: int = 0,
+                 open_days: tuple[str, ...] = ()) -> str:
     """一天 = S 形主轴上的一个点。默认只有它，点开才长出当天明细。
 
     最早的排法是"一天一张可折叠的卡，卡里再放一根事件轴"，轴套在里面，
@@ -2297,19 +2358,20 @@ def _render_day(date_key: str, sessions: list[dict], index: int = 0) -> str:
     节点排成网格，轴线顺着行之间的通道来回折返，列数由屏幕宽度决定。
     """
     total = 0
+    dur_re = _DUR_RE_EN if vlang.IS_EN else _DUR_RE
     for s in sessions:
-        m = _DUR_RE.search(s["rest"])
+        m = dur_re.search(s["rest"])
         if m:
             total += int(m.group(1)) * 60 + int(m.group(2))
     H, M = divmod(total, 60)
     n_nodes = sum(len(s["nodes"]) for s in sessions)
     meta: list[str] = []
     if len(sessions) > 1:
-        meta.append(f"{len(sessions)} 次开机")
+        meta.append(vlang.n_text(len(sessions), "sessions"))
     if n_nodes:
-        meta.append(f"{n_nodes} 个节点")
+        meta.append(vlang.n_text(n_nodes, "events"))
     if H or M:
-        meta.append(f"{H} 小时 {M} 分")
+        meta.append(vlang.dur_text(H, M))
     # 跨天延续的那条要在卡面上就说清楚，否则"25 日 00:00 起"看着像
     # 凌晨开过一次机，而事实是昨晚 20:48 那场一直没关。
     carry = next((re.search(r"（接[^）]*）", s["rest"]) for s in sessions
@@ -2322,7 +2384,11 @@ def _render_day(date_key: str, sessions: list[dict], index: int = 0) -> str:
     head = sessions[0]
     # 圆点是 <li> 的直接子元素，不放在卡片里 —— 轴线走的是卡片左边的走廊
     # 和卡片上方的通道，圆点压着走廊中线，一眼看出它挂在哪一段轴上。
-    out = [f'<li class="node day-node" id="day-{date_key}" data-key="{date_key}" '
+    # open_days 是"生成时就展开"：给静态页（导出/截图）用，日常还是靠
+    # 用户点开、localStorage 记住。
+    open_cls = " open" if date_key in open_days else ""
+    out = [f'<li class="node day-node{open_cls}" id="day-{date_key}" '
+           f'data-key="{date_key}" '
            f'style="--c:{color};--br:{_rgba(color, .30)};--i:{index}">',
            f'<span class="dot"><b>{day_no}</b></span>',
            '<div class="card">',
@@ -2330,8 +2396,8 @@ def _render_day(date_key: str, sessions: list[dict], index: int = 0) -> str:
            f'<h3>{head["label"]}　{head["week"]}</h3>',
            f'<p class="day-sum">{_md_inline(_day_summary(sessions))}</p>',
            '<span class="day-more"><i class="caret"></i>'
-           '<span class="mo">点开看当天明细</span>'
-           '<span class="mc">收起明细</span></span>',
+           f'<span class="mo">{vlang.t("expand")}</span>'
+           f'<span class="mc">{vlang.t("collapse")}</span></span>',
            '</div>',
            '<div class="day-body"><div class="day-inner"><div class="day-pad">']
     multi = len(sessions) > 1
@@ -2395,8 +2461,10 @@ def _version_banner() -> str:
         return ""
     ver = me.get("version", "?")
     build = (me.get("build") or "")[:10]
-    parts = [f'<span>VoiceGuard {_esc(ver)}'
-             + (f' · {_esc(build)} 构建' if build else '') + '</span>']
+    # 产品名跟着页面语言走：中文页叫 VoiceGuard，英文页叫 DayReplay
+    brand = "DayReplay" if vlang.IS_EN else "VoiceGuard"
+    parts = [f'<span>{brand} {_esc(ver)}'
+             + (f' · {_esc(build)} {vlang.t("build")}' if build else '') + '</span>']
     try:
         st = json.loads((vcfg.DATA / "update_state.json")
                         .read_text(encoding="utf-8"))
@@ -2443,7 +2511,7 @@ def _search_block(days: list[tuple[str, list[dict]]]) -> str:
     for key, ss in reversed(idx_days):
         head = ss[0]
         sub = " · ".join(
-            x for x in [f"{len(ss)} 次开机" if len(ss) > 1 else "",
+            x for x in [vlang.n_text(len(ss), "sessions") if len(ss) > 1 else "",
                         head["rest"].split("·")[0].strip()] if x)
         day_idx.append({"key": key, "label": head["label"], "week": head["week"],
                         "title": f"{head['label']} {head['week']}",
@@ -2478,13 +2546,16 @@ def _search_block(days: list[tuple[str, list[dict]]]) -> str:
 
 
 def ledger_to_html(md_text: str, refresh_meta: str = "",
-                   hint: str = "") -> str:
+                   hint: str = "", open_days: tuple[str, ...] = ()) -> str:
     """把总账 md 转成能双击打开的 html。
 
     结构：一天一张卡（默认收起）→ 点开 → 当天几次开机 → 每次开机的
     时间轴（最近的节点在最前）→ 每个节点自带可点开的录音/截图/文档。
 
     md 仍然是唯一的事实来源，这里只负责把它摆成能点的样子。
+
+    open_days：指定哪几天生成时就展开。默认空 —— 日常靠用户点开，
+    状态记在 localStorage。导出静态页/截图时用得上。
     """
     md_text = _rebased(md_text)
     md_text = _crop_links(md_text)
@@ -2492,7 +2563,7 @@ def ledger_to_html(md_text: str, refresh_meta: str = "",
     banner = _version_banner()
     if not sessions:
         return _PAGE.format(body="", refresh_meta=refresh_meta, hint=hint,
-                            ver_banner=banner)
+                            ver_banner=banner, **_page_kwargs())
     # 同一天可能开机关机好几次，合成一张卡；新的一天在最上面
     days: list[tuple[str, list[dict]]] = []
     for s in sessions:
@@ -2505,10 +2576,11 @@ def ledger_to_html(md_text: str, refresh_meta: str = "",
     body += ('<div class="tl"><div class="tl-body">'
              '<svg class="tl-path" aria-hidden="true"><path d=""></path></svg>'
              '<ol class="nodes">'
-             + "\n".join(_render_day(k, v, i) for i, (k, v) in enumerate(days))
+             + "\n".join(_render_day(k, v, i, open_days)
+                        for i, (k, v) in enumerate(days))
              + '</ol></div></div>')
     return _PAGE.format(body=body, refresh_meta=refresh_meta, hint=hint,
-                        ver_banner=banner)
+                        ver_banner=banner, **_page_kwargs())
 
 def write_ledger_html(live: bool = False, every: int = 300) -> Path | None:
     """写网页版。live=True 时让页面自己刷 —— 用户不会手动按 F5。
@@ -2524,9 +2596,10 @@ def write_ledger_html(live: bool = False, every: int = 300) -> Path | None:
     meta = hint = ""
     if live:
         meta = f'<meta http-equiv="refresh" content="{max(60, int(every))}">'
-        hint = ('<p class="hint"><b>● 正在记录</b>　最后更新 '
-                f'{time.strftime("%H:%M:%S")}　每 {max(60, int(every)) // 60} '
-                '分钟自动刷新，不用手动按 F5</p>')
+        hint = ('<p class="hint">'
+                + vlang.hint_text(time.strftime("%H:%M:%S"),
+                                  max(60, int(every)) // 60)
+                + '</p>')
     _atomic_write(p, ledger_to_html(LEDGER.read_text(encoding="utf-8"),
                                     refresh_meta=meta, hint=hint))
     return p

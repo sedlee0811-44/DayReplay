@@ -11,7 +11,14 @@
   10月25日 / 10-25 / 10/25 / 25日 / 今天 / 昨天 / 前天 / 大前天 / 周五
 关键词解析：去掉日期和停用词后，整串当一个短语（权重最高），
 再拆 2-gram 兜底（"越南""南改""改革"都算弱命中，长词优先高亮）。
+
+多语言：文案、停用词表、日期解析都随 vlang.LANG 切。中文页是默认，
+英文页（DAYREPLAY_LANG=en）给不读中文的贡献者看 —— 停用词表不跟着换的话，
+英文查询会被中文的"我/的/了"切碎，命中全乱。
 """
+import json
+
+import vlang
 
 SEARCH_CSS = """
 /* ===== 自然语言搜索 ===== */
@@ -85,13 +92,65 @@ SEARCH_HTML = """
             stroke-linecap="round"/>
     </svg>
     <input id="q" type="text" autocomplete="off" spellcheck="false"
-           placeholder="大白话直接搜：10 月 25 日我做了什么 · 越南改革 · 录音里提到…">
+           placeholder="__SEARCH_PH__">
     <span class="srch-cnt" id="cnt"></span>
   </div>
   <div class="srch-read" id="read"></div>
   <div class="srch-res" id="res"></div>
 </div>
 """
+# placeholder 是文案不是代码，占位符替进去（.format 会误伤 CSS 里的花括号）
+SEARCH_HTML = SEARCH_HTML.replace("__SEARCH_PH__", vlang.t("search_ph"))
+
+# ------------------------------------------------------------------ 多语言
+#
+# 停用词表和日期解析必须跟着语言换：中文的"我/的/了"和英文的"the/of"作用
+# 一样，都是从查询里剔掉的噪声。不换的话，英文查询会被中文停用词切不动，
+# 整个短语当成一个词，命中精度直接归零。
+_STOP_ZH = (
+    '我 你 您 他 她 咱 们 自己 的 了 着 地 得 是 在 有 没有 没 无 什么 怎么 怎样 如何 '
+    '哪 哪些 哪个 哪里 吗 呢 吧 啊 呀 嘛 啦 哦 噢 嗯 唉 帮 帮我 帮忙 给 给我 请问 '
+    '我记 我记得 记得 想 想要 要 找 找找 找一下 查找 搜索 搜 搜一下 查 查查 查一下 '
+    '看看 看 看下 看一下 当时 那时候 那时 时候 时间 好像 大概 可能 应该 事 事情 东西 '
+    '做过 做了 干了 弄了 搞了 看过 听过 说过 用过 开过 找过 查过 过 把 被 让 向 从 '
+    '到 和 跟 与 及 等 还 还是 就 都 也 再 最 更 很 太 一 下 个 些 么 那 这个 那些 '
+    '这些 里 中 上 下'
+)
+_STOP_EN = (
+    'i me my mine we us our ours you your yours he him his she her hers it its they '
+    'them their this that these those am is are was were be been being have has had '
+    'do does did doing will would shall should can could may might must '
+    'a an the and or but if then else so of to in on at by for with about against '
+    'what which who whom whose when where why how did do does done '
+    'just now then today yesterday tomorrow '
+    'please could would like want need find search look show tell '
+    'remember recall time while during about around'
+)
+
+# JS 里要显示的文案。整句由 Python 侧给，JS 只管取 —— 免得英文版出现
+# "理解："这种半吊子。
+_UI = {
+    "zh": {
+        "date": "日期", "kw": "关键词", "got": "理解：",
+        "none": "（没解析出日期或关键词）",
+        "day": "当天", "open_day": "打开这天",
+        "voice": "录音与文字稿", "sec": "秒",
+        "rec": "录音", "tr": "文字稿",
+        "no_text": "活动声，没有转写出文字",
+        "more": "条，把关键词说得更具体些",
+        "hits": "条命中",
+    },
+    "en": {
+        "date": "Date", "kw": "Keywords", "got": "Understood:",
+        "none": "(no date or keyword found)",
+        "day": "That day", "open_day": "Open this day",
+        "voice": "Recordings & transcripts", "sec": "s",
+        "rec": "Audio", "tr": "Transcript",
+        "no_text": "Sound event — no speech was transcribed",
+        "more": "more — be more specific with your keywords",
+        "hits": "hits",
+    },
+}
 
 SEARCH_JS = r"""
 (function () {
@@ -106,13 +165,8 @@ SEARCH_JS = r"""
   DAYS.forEach(function (d) { if (d.key > base.toISOString().slice(0, 10)) base = new Date(d.key + 'T00:00:00'); });
   var Y = base.getFullYear(), M = base.getMonth() + 1;
 
-  var STOP = ('我 你 您 他 她 咱 们 自己 的 了 着 地 得 是 在 有 没有 没 无 什么 怎么 怎样 如何 ' +
-              '哪 哪些 哪个 哪里 吗 呢 吧 啊 呀 嘛 啦 哦 噢 嗯 唉 帮 帮我 帮忙 给 给我 请问 ' +
-              '我记 我记得 记得 想 想要 要 找 找找 找一下 查找 搜索 搜 搜一下 查 查查 查一下 ' +
-              '看看 看 看下 看一下 当时 那时候 那时 时候 时间 好像 大概 可能 应该 事 事情 东西 ' +
-              '做过 做了 干了 弄了 搞了 看过 听过 说过 用过 开过 找过 查过 过 把 被 让 向 从 ' +
-              '到 和 跟 与 及 等 还 还是 就 都 也 再 最 更 很 太 一 下 个 些 么 那 这个 那些 ' +
-              '这些 里 中 上 下').split(' ');
+  var STOP = __STOP__;
+  var L = __UI__;
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -169,6 +223,60 @@ SEARCH_JS = r"""
   /* ---- 人话 → 结构化查询 ---- */
   function parse(raw) {
     var s = ' ' + String(raw || '') + ' ', date = null, m, all;
+
+    /* 英文分支先行：Oct 25 / October 25 / yesterday / Monday */
+    if (L.months) {
+      var MON = L.months, reMo, mo, mm, mi, k;
+      reMo = new RegExp('\\b(' + MON.join('|') + ')\\.?\\s+(\\d{1,2})\\b', 'gi');
+      mo = s.match(reMo);
+      if (mo) {
+        mm = reMo.exec(mo[mo.length - 1]);
+        mi = -1;
+        for (k = 0; k < MON.length; k++) {
+          if (MON[k].toLowerCase() === mm[1].toLowerCase().replace('.', '')) { mi = k; break; }
+        }
+        if (mi >= 0) { date = dkey(Y, mi + 1, +mm[2]); s = s.replace(reMo, ' '); }
+      }
+      if (!date) {
+        reMo = new RegExp('\\b(\\d{1,2})\\s+(' + MON.join('|') + ')\\b', 'gi');
+        mo = s.match(reMo);
+        if (mo) {
+          mm = reMo.exec(mo[mo.length - 1]);
+          mi = -1;
+          for (k = 0; k < MON.length; k++) {
+            if (MON[k].toLowerCase() === mm[2].toLowerCase()) { mi = k; break; }
+          }
+          if (mi >= 0) { date = dkey(Y, mi + 1, +mm[1]); s = s.replace(reMo, ' '); }
+        }
+      }
+      if (!date) {
+        var REL_EN = [['the day before yesterday', 2], ['yesterday', 1],
+                      ['today', 0], ['tomorrow', -1]];
+        for (var ri = 0; ri < REL_EN.length; ri++) {
+          if (s.toLowerCase().indexOf(REL_EN[ri][0]) >= 0) {
+            var dEn = new Date(base); dEn.setDate(dEn.getDate() - REL_EN[ri][1]);
+            date = dkey(dEn.getFullYear(), dEn.getMonth() + 1, dEn.getDate());
+            s = s.replace(new RegExp(REL_EN[ri][0], 'gi'), ' ');
+            break;
+          }
+        }
+      }
+      if (!date && L.weekdays) {
+        for (var wi = 0; wi < L.weekdays.length; wi++) {
+          var reWk = new RegExp('\\b' + L.weekdays[wi] + '\\b', 'i');
+          if (reWk.test(s)) {
+            var wIdx = L.weekdays.indexOf(
+              s.match(reWk)[0].charAt(0).toUpperCase() + s.match(reWk)[0].slice(1).toLowerCase());
+            for (var kk = 0; kk < DAYS.length; kk++) {
+              var ddw = new Date(DAYS[kk].key + 'T00:00:00');
+              if (ddw.getDay() === wIdx) { date = DAYS[kk].key; break; }
+            }
+            s = s.replace(reWk, ' ');
+            break;
+          }
+        }
+      }
+    }
 
     all = s.match(/(\d{1,2})\s*月\s*(\d{1,2})\s*[日号]?/g);
     if (all) { m = /(\d{1,2})\s*月\s*(\d{1,2})/.exec(all[all.length - 1]);
@@ -283,10 +391,10 @@ SEARCH_JS = r"""
     if (P.date) {
       var dl = null;
       for (i = 0; i < DAYS.length; i++) if (DAYS[i].key === P.date) dl = DAYS[i];
-      bits.push('<b>日期</b> ' + (dl ? dayLabel(dl) : P.date));
+      bits.push('<b>' + L.date + '</b> ' + (dl ? dayLabel(dl) : P.date));
     }
-    if (P.phrase) bits.push('<span class="k">关键词</span> 「' + esc(P.phrase) + '」');
-    read.innerHTML = bits.length ? ('理解：' + bits.join('　·　')) : '（没解析出日期或关键词）';
+    if (P.phrase) bits.push('<span class="k">' + L.kw + '</span> 「' + esc(P.phrase) + '」');
+    read.innerHTML = bits.length ? (L.got + bits.join('　·　')) : L.none;
 
     /* 当天 */
     var dayHits = [];
@@ -298,14 +406,14 @@ SEARCH_JS = r"""
     }
     dayHits.sort(function (a, b) { return b.sc - a.sc; });
     if (dayHits.length) {
-      html += '<div class="srch-sec"><h4>当天</h4>';
+      html += '<div class="srch-sec"><h4>' + L.day + '</h4>';
       for (i = 0; i < Math.min(dayHits.length, 3); i++) {
         var dd = dayHits[i].d;
         html += '<div class="srch-hit"><div class="hd"><span class="t">' +
                 esc(dayLabel(dd)) + '</span><span class="d">' + esc(dd.sub || '') +
                 '</span></div><p class="sn">' + snippet(dd.sum, P, 150) +
                 '</p><div class="acts"><button class="go" data-day="' + dd.key +
-                '">打开这天</button></div></div>';
+                '">' + L.open_day + '</button></div></div>';
       }
       html += '</div>';
     }
@@ -325,24 +433,23 @@ SEARCH_JS = r"""
     }
     vh.sort(function (a, b) { return b.sc - a.sc || b.v.t - a.v.t; });
     if (vh.length) {
-      html += '<div class="srch-sec"><h4>录音与文字稿</h4>';
+      html += '<div class="srch-sec"><h4>' + L.voice + '</h4>';
       for (i = 0; i < Math.min(vh.length, 30); i++) {
         var it = vh[i].v;
-        var meta = it.hm + '　' + it.dur.toFixed(1) + ' 秒';
+        var meta = it.hm + '　' + it.dur.toFixed(1) + ' ' + L.sec;
         if (it.spk) meta += '　·　' + esc(it.spk);
         if (it.labels && it.labels.length) meta += '　·　' + esc(it.labels.join('、'));
         var acts = '';
-        if (it.wav) acts += '<a href="' + esc(it.wav) + '">▶ 录音</a>';
-        if (it.tr) acts += '<a href="' + esc(it.tr) + '">文字稿</a>';
-        acts += '<button class="go" data-day="' + it.day + '">打开这天</button>';
+        if (it.wav) acts += '<a href="' + esc(it.wav) + '">▶ ' + L.rec + '</a>';
+        if (it.tr) acts += '<a href="' + esc(it.tr) + '">' + L.tr + '</a>';
+        acts += '<button class="go" data-day="' + it.day + '">' + L.open_day + '</button>';
         html += '<div class="srch-hit"><div class="hd"><span class="t">' + meta +
                 '</span></div><p class="sn">' +
                 (it.text ? snippet(it.text, P, 130)
-                         : '<span style="color:#7d8899">活动声，没有转写出文字</span>') +
+                         : '<span style="color:#7d8899">' + L.no_text + '</span>') +
                 '</p><div class="acts">' + acts + '</div></div>';
       }
-      if (vh.length > 30) html += '<div class="srch-empty">还有 ' + (vh.length - 30) +
-                                  ' 条，把关键词说得更具体些</div>';
+      if (vh.length > 30) html += '<div class="srch-empty">' + (vh.length - 30) + ' ' + L.more + '</div>';
       html += '</div>';
       nV = vh.length;
     }
@@ -428,3 +535,20 @@ SEARCH_JS = r"""
   });
 })();
 """
+
+# 把 Python 侧准备好的停用词表和文案注入 JS。
+# 停用词是数组（JS 要 .indexOf 查），文案是对象。
+_STOP_LIST = (_STOP_EN if vlang.IS_EN else _STOP_ZH).split()
+_UI_OBJ = dict(_UI["en" if vlang.IS_EN else "zh"])
+if vlang.IS_EN:
+    _UI_OBJ["months"] = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    _UI_OBJ["weekdays"] = ["Sunday", "Monday", "Tuesday", "Wednesday",
+                           "Thursday", "Friday", "Saturday"]
+else:
+    _UI_OBJ["months"] = []
+    _UI_OBJ["weekdays"] = []
+
+SEARCH_JS = (SEARCH_JS
+             .replace("__STOP__", json.dumps(_STOP_LIST, ensure_ascii=False))
+             .replace("__UI__", json.dumps(_UI_OBJ, ensure_ascii=False)))
